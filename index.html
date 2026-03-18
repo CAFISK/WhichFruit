@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍉 测测你是哪种水果</title>
+  <link rel="stylesheet" href="style.css"></head>
+<body>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <div class="toggle-thumb">
+      <span id="themeIcon">☀️</span>
+    </div>
+  </button>
+
+  <!-- Confetti Container -->
+  <div class="confetti-container" id="confettiContainer"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🍉 测测你是哪种水果</h1>
+      <p>回答以下问题，发现你的水果人格！</p>
+    </div>
+
+    <!-- Start Screen -->
+    <div class="quiz-card" id="startScreen">
+      <div class="start-screen">
+        <div class="fruit-icons">🍎🍊🍋🍇🍓🥝</div>
+        <h2>准备好了吗？</h2>
+        <p>
+          每个人都有一种水果与自己的性格最为契合。<br>
+          通过 16 道趣味小题，看看你最像哪种水果吧！<br>
+          没有对错之分，选择最贴近你的答案即可 ✨
+        </p>
+        <button class="start-btn" onclick="startQuiz()">开始测试 🚀</button>
+      </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quizScreen" class="hidden">
+      <!-- Progress -->
+      <div class="progress-container">
+        <div class="progress-info">
+          <span id="progressText">第 1 题 / 共 16 题</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="quiz-card" id="questionCard">
+        <div class="question-emoji" id="questionEmoji"></div>
+        <div class="question-number" id="questionNumber"></div>
+        <div class="question-text" id="questionText"></div>
+        <div class="options" id="optionsContainer"></div>
+        <div class="nav-buttons">
+          <button class="nav-btn prev" id="prevBtn" onclick="prevQuestion()">← 上一题</button>
+          <button class="nav-btn next" id="nextBtn" onclick="nextQuestion()" disabled>下一题 →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div class="quiz-card hidden" id="resultScreen">
+      <div class="result-screen">
+        <div class="result-fruit-emoji" id="resultEmoji"></div>
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-subtitle" id="resultSubtitle"></div>
+        <div class="result-match">
+          匹配度：<span id="resultMatch"></span>
+        </div>
+        <div class="result-traits" id="resultTraits"></div>
+        <div class="result-desc" id="resultDesc"></div>
+        <div class="top3-container" id="top3Container"></div>
+        <div class="result-actions">
+          <button class="restart-btn" onclick="restartQuiz()">🔄 再测一次</button>
+          <button class="share-btn" onclick="shareResult()">📋 复制结果</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Made with 🍓 — Fruit Personality Quiz</div>
+  </div>
+
+  <script>
+    // ===== Quiz Data =====
+    const questions = [
+      {
+        emoji: '🌅',
+        question: '周末早晨醒来，你的第一个念头是什么？',
+        options: [
+          { text: '立刻起床，安排满满的一天', type: 'apple' },
+          { text: '赖在床上看看手机，慢慢清醒', type: 'peach' },
+          { text: '呼朋唤友，组织聚会活动', type: 'strawberry' },
+          { text: '找本书或听音乐，享受独处时光', type: 'grape' }
+        ]
+      },
+      {
+        emoji: '🎉',
+        question: '朋友聚会上，你通常扮演什么角色？',
+        options: [
+          { text: '活跃气氛的开心果，全场焦点', type: 'strawberry' },
+          { text: '默默观察的人，偶尔说几句到位的话', type: 'grape' },
+          { text: '负责组织和安排的人，确保一切顺利', type: 'apple' },
+          { text: '随和地跟每个人聊天，让大家觉得温暖', type: 'peach' }
+        ]
+      },
+      {
+        emoji: '😤',
+        question: '遇到压力时，你会怎么处理？',
+        options: [
+          { text: '列清单、定计划，逐个解决', type: 'apple' },
+          { text: '找人倾诉，说出来就好多了', type: 'peach' },
+          { text: '运动或社交来释放压力', type: 'orange' },
+          { text: '独处思考，从更高的角度看问题', type: 'grape' }
+        ]
+      },
+      {
+        emoji: '🎨',
+        question: '以下哪种颜色/风格最吸引你？',
+        options: [
+          { text: '经典红色，简洁有力', type: 'apple' },
+          { text: '温暖粉色，柔和舒适', type: 'peach' },
+          { text: '鲜艳亮色，热情活泼', type: 'strawberry' },
+          { text: '深邃紫色，神秘优雅', type: 'grape' }
+        ]
+      },
+      {
+        emoji: '🍽️',
+        question: '选一种理想的用餐方式：',
+        options: [
+          { text: '高效快餐，不浪费时间', type: 'apple' },
+          { text: '在家做饭，温馨又舒适', type: 'peach' },
+          { text: '热闹的火锅或烧烤，越多人越好', type: 'watermelon' },
+          { text: '安静的咖啡厅或西餐，慢慢品味', type: 'grape' }
+        ]
+      },
+      {
+        emoji: '✈️',
+        question: '如果有一周假期，你最想做什么？',
+        options: [
+          { text: '去探索新的城市，打卡各种景点', type: 'orange' },
+          { text: '找个海边度假村，彻底放松', type: 'peach' },
+          { text: '和朋友一起自驾游，越疯越好', type: 'strawberry' },
+          { text: '去一个人少的地方，安静地写写画画', type: 'lemon' }
+        ]
+      },
+      {
+        emoji: '💼',
+        question: '你认为自己最大的优点是什么？',
+        options: [
+          { text: '执行力强，说到做到', type: 'apple' },
+          { text: '善解人意，总能照顾到别人的感受', type: 'peach' },
+          { text: '充满活力，感染身边的人', type: 'strawberry' },
+          { text: '思考深入，有独到的见解', type: 'grape' }
+        ]
+      },
+      {
+        emoji: '🌙',
+        question: '睡前最后一件事你通常在做什么？',
+        options: [
+          { text: '检查明天的日程和待办事项', type: 'apple' },
+          { text: '和家人朋友聊天说晚安', type: 'peach' },
+          { text: '刷社交媒体，看看大家在做什么', type: 'strawberry' },
+          { text: '看书、听播客或思考人生', type: 'grape' }
+        ]
+      },
+      {
+        emoji: '🎵',
+        question: '你最喜欢哪种类型的音乐？',
+        options: [
+          { text: '节奏强劲的电子/摇滚，让人充满能量', type: 'orange' },
+          { text: '温暖的民谣/轻音乐，安静治愈', type: 'lemon' },
+          { text: '流行热歌，跟着大家一起嗨', type: 'watermelon' },
+          { text: '古典/爵士，有品味有内涵', type: 'kiwi' }
+        ]
+      },
+      {
+        emoji: '🐾',
+        question: '如果养一只宠物，你会选什么？',
+        options: [
+          { text: '忠诚可靠的狗狗', type: 'apple' },
+          { text: '软萌独立的猫咪', type: 'lemon' },
+          { text: '色彩斑斓的鹦鹉', type: 'orange' },
+          { text: '安静好养的金鱼', type: 'grape' }
+        ]
+      },
+      {
+        emoji: '📚',
+        question: '选一本最想读的书的类型：',
+        options: [
+          { text: '人物传记/成功学', type: 'apple' },
+          { text: '治愈系小说/散文', type: 'peach' },
+          { text: '科幻/冒险故事', type: 'watermelon' },
+          { text: '哲学/心理学', type: 'kiwi' }
+        ]
+      },
+      {
+        emoji: '🏠',
+        question: '理想的居住环境是怎样的？',
+        options: [
+          { text: '市中心高层公寓，交通便利效率高', type: 'orange' },
+          { text: '温馨的郊区小屋，有花园有阳光', type: 'peach' },
+          { text: '热闹的合租公寓，永远不缺人陪', type: 'watermelon' },
+          { text: '山间或海边的独栋，远离喧嚣', type: 'lemon' }
+        ]
+      },
+      {
+        emoji: '🎁',
+        question: '给好朋友选礼物，你会怎么做？',
+        options: [
+          { text: '提前做好攻略，买最实用的', type: 'apple' },
+          { text: '手工制作，用心最重要', type: 'peach' },
+          { text: '选最有趣新奇的，让对方惊喜', type: 'strawberry' },
+          { text: '仔细回忆对方说过想要什么', type: 'kiwi' }
+        ]
+      },
+      {
+        emoji: '⚡',
+        question: '面对一个全新的挑战，你的态度是？',
+        options: [
+          { text: '兴奋！越难越有征服欲', type: 'orange' },
+          { text: '会紧张，但有朋友支持就能上', type: 'peach' },
+          { text: '无所畏惧，先冲了再说', type: 'watermelon' },
+          { text: '冷静分析，做好万全准备再行动', type: 'kiwi' }
+        ]
+      },
+      {
+        emoji: '🌈',
+        question: '你觉得人生中最重要的是什么？',
+        options: [
+          { text: '成就感和目标的实现', type: 'orange' },
+          { text: '爱与被爱，温暖的人际关系', type: 'peach' },
+          { text: '快乐和自由，活在当下', type: 'watermelon' },
+          { text: '自我认知和内心的平静', type: 'lemon' }
+        ]
+      },
+      {
+        emoji: '🪞',
+        question: '朋友们通常怎么评价你？',
+        options: [
+          { text: '靠谱、能力强、值得信赖', type: 'apple' },
+          { text: '温柔、贴心、像一阵暖风', type: 'peach' },
+          { text: '有趣、脑洞大、跟你在一起永远不无聊', type: 'strawberry' },
+          { text: '神秘、有深度、总让人想了解更多', type: 'kiwi' }
+        ]
+      }
+    ];
+
+    const results = {
+      apple: {
+        emoji: '🍎',
+        name: '苹果',
+        subtitle: '高效行动派',
+        traits: ['果断', '自律', '可靠', '目标导向', '高执行力'],
+        description: '你就像一颗红苹果——经典、可靠、充满能量！你是天生的领导者和行动派，做事有条理，效率极高。你的字典里没有"拖延"两个字，一旦下定决心就会全力以赴。虽然偶尔给人严肃的感觉，但朋友们都知道你是最值得信赖的人。你就像苹果一样，无论何时何地，都是大家的首选！'
+      },
+      peach: {
+        emoji: '🍑',
+        name: '蜜桃',
+        subtitle: '温暖治愈系',
+        traits: ['温柔', '体贴', '耐心', '善良', '治愈'],
+        description: '你就像一颗蜜桃——温柔、甜蜜、让人感到温暖！你是朋友圈里的"情绪稳定剂"，总能用温暖的话语和细心的关怀打动身边的人。你的共情能力超强，别人还没开口你就已经感受到了他们的情绪。虽然你有时候会太顾虑别人而忘了照顾自己，但正是这份善良让你独一无二！'
+      },
+      strawberry: {
+        emoji: '🍓',
+        name: '草莓',
+        subtitle: '活力社交达人',
+        traits: ['热情', '开朗', '有感染力', '社交达人', '乐观'],
+        description: '你就像一颗草莓——鲜艳、甜美、人见人爱！你天生自带"快乐光环"，走到哪里就把欢笑带到哪里。你的朋友遍天下，每个人都喜欢跟你在一起。你有着惊人的社交能力和感染力，任何聚会因为你的存在而变得更加精彩。保持你的热情吧，你就是最甜的那颗草莓！'
+      },
+      grape: {
+        emoji: '🍇',
+        name: '葡萄',
+        subtitle: '深度思考者',
+        traits: ['睿智', '独立', '有深度', '创造力强', '优雅'],
+        description: '你就像一串葡萄——外表沉静，内在丰富而深邃！你是人群中的思考者和观察者，总能看到别人忽略的细节。你享受独处，在安静中迸发出惊人的创造力。虽然不是最爱说话的人，但你每次开口都能说到点子上。你的内心世界像葡萄酒一样，越品越有味道！'
+      },
+      orange: {
+        emoji: '🍊',
+        name: '橙子',
+        subtitle: '元气冒险家',
+        traits: ['勇敢', '乐观', '精力充沛', '爱探索', '不服输'],
+        description: '你就像一颗鲜橙——充满阳光、活力四射、酸甜有味！你是天生的冒险家，永远对新事物充满好奇和热情。困难在你眼里只是「升级打怪」的必经之路，你总能把压力转化成前进的动力。你的乐观和勇气像阳光一样感染着身边每一个人，跟你在一起永远充满希望！'
+      },
+      watermelon: {
+        emoji: '🍉',
+        name: '西瓜',
+        subtitle: '快乐分享家',
+        traits: ['大方', '豪爽', '合群', '慷慨', '快乐至上'],
+        description: '你就像一个大西瓜——大气、甜蜜、人人都爱！你天生就是社交场上的灵魂人物，最擅长把快乐分享给每一个人。你的慷慨和豪爽让朋友们总想围在你身边。你相信人生就该尽情享受，生活在你手里永远是一场热热闹闹的夏日派对！'
+      },
+      lemon: {
+        emoji: '🍋',
+        name: '柠檬',
+        subtitle: '清醒文艺者',
+        traits: ['独特', '敏感', '文艺', '通透', '有个性'],
+        description: '你就像一颗柠檬——清新、独特、回味无穷！你有着与众不同的审美和看待世界的方式，骨子里是一个浪漫的文艺青年。你看似高冷，其实内心极其丰富和细腻。你喜欢用自己的节奏过生活，不随波逐流，正是这份独特让你在人群中格外闪亮！'
+      },
+
+      kiwi: {
+        emoji: '🥝',
+        name: '猕猴桃',
+        subtitle: '低调实力派',
+        traits: ['内秀', '低调', '有内涵', '观察力强', '沉稳'],
+        description: '你就像一颗猕猴桃——外表朴实，内在却惊艳无比！你是不鸣则已一鸣惊人的类型，平时低调内敛，但关键时刻总能展现出超强的实力。你有敏锐的观察力和深刻的洞察力，总能一针见血地看透事物本质。你不需要高调的表现，因为懂你的人自然知道你有多了不起！'
+      }
+    };
+
+    // ===== State =====
+    let currentQuestion = 0;
+    let answers = [];
+
+    // ===== Theme =====
+    function initTheme() {
+      const saved = localStorage.getItem('fruitQuizTheme');
+      if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+      updateThemeIcon();
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('fruitQuizTheme', next);
+      updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+      const theme = document.documentElement.getAttribute('data-theme');
+      document.getElementById('themeIcon').textContent = theme === 'dark' ? '🌙' : '☀️';
+    }
+
+    // ===== Quiz Logic =====
+    function startQuiz() {
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('quizScreen').classList.remove('hidden');
+      currentQuestion = 0;
+      answers = new Array(questions.length).fill(null);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = questions[currentQuestion];
+      const card = document.getElementById('questionCard');
+
+      // Animate
+      card.style.animation = 'none';
+      card.offsetHeight; // trigger reflow
+      card.style.animation = 'fadeInUp 0.4s ease';
+
+      document.getElementById('questionEmoji').textContent = q.emoji;
+      document.getElementById('questionNumber').textContent = `问题 ${currentQuestion + 1}`;
+      document.getElementById('questionText').textContent = q.question;
+
+      // Progress
+      const progress = ((currentQuestion) / questions.length) * 100;
+      document.getElementById('progressFill').style.width = progress + '%';
+      document.getElementById('progressText').textContent = `第 ${currentQuestion + 1} 题 / 共 ${questions.length} 题`;
+      document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+
+      // Options
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
+      const labels = ['A', 'B', 'C', 'D'];
+
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        if (answers[currentQuestion] === i) {
+          btn.classList.add('selected');
+        }
+        btn.innerHTML = `<span class="option-label">${labels[i]}</span><span>${opt.text}</span>`;
+        btn.onclick = () => selectOption(i);
+        container.appendChild(btn);
+      });
+
+      // Nav buttons
+      document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+      document.getElementById('nextBtn').disabled = answers[currentQuestion] === null;
+      document.getElementById('nextBtn').textContent =
+        currentQuestion === questions.length - 1 ? '查看结果 🎉' : '下一题 →';
+    }
+
+    function selectOption(index) {
+      answers[currentQuestion] = index;
+      document.querySelectorAll('.option-btn').forEach((btn, i) => {
+        btn.classList.toggle('selected', i === index);
+      });
+      document.getElementById('nextBtn').disabled = false;
+    }
+
+    function nextQuestion() {
+      if (answers[currentQuestion] === null) return;
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        renderQuestion();
+      }
+    }
+
+    function calculateResult() {
+      const scores = { apple: 0, peach: 0, strawberry: 0, grape: 0, orange: 0, watermelon: 0, lemon: 0, kiwi: 0 };
+      answers.forEach((ansIndex, qIndex) => {
+        if (ansIndex !== null) {
+          const type = questions[qIndex].options[ansIndex].type;
+          scores[type]++;
+        }
+      });
+
+      // Sort by score descending
+      const sorted = Object.entries(scores)
+        .sort((a, b) => b[1] - a[1]);
+
+      return sorted; // Returns array of [type, score] pairs
+    }
+
+    function getTopResult() {
+      const sorted = calculateResult();
+      return sorted[0][0]; // Return the top fruit type
+    }
+
+    function showResult() {
+      document.getElementById('quizScreen').classList.add('hidden');
+      document.getElementById('resultScreen').classList.remove('hidden');
+
+      const sorted = calculateResult();
+      const topType = sorted[0][0];
+      const topScore = sorted[0][1];
+      const result = results[topType];
+      const totalAnswered = answers.filter(a => a !== null).length;
+
+      // Calculate match percentage based on score proportion
+      const matchPercent = totalAnswered > 0 ? Math.round((topScore / totalAnswered) * 100) : 0;
+
+      document.getElementById('resultEmoji').textContent = result.emoji;
+      document.getElementById('resultTitle').textContent = `你是「${result.name}」！`;
+      document.getElementById('resultSubtitle').textContent = result.subtitle;
+      document.getElementById('resultMatch').textContent = matchPercent + '%';
+      document.getElementById('resultDesc').textContent = result.description;
+
+      const traitsContainer = document.getElementById('resultTraits');
+      traitsContainer.innerHTML = '';
+      result.traits.forEach(trait => {
+        const tag = document.createElement('span');
+        tag.className = 'trait-tag';
+        tag.textContent = '#' + trait;
+        traitsContainer.appendChild(tag);
+      });
+
+      // Top 3 ranking
+      const top3Container = document.getElementById('top3Container');
+      top3Container.innerHTML = '';
+      const rankIcons = ['🥇', '🥈', '🥉'];
+      const top3 = sorted.filter(([type, score]) => score > 0).slice(0, 3);
+
+      if (top3.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'top3-title';
+        title.textContent = '🏆 最适配水果 TOP 3';
+        top3Container.appendChild(title);
+
+        const list = document.createElement('div');
+        list.className = 'top3-list';
+
+        top3.forEach(([type, score], index) => {
+          const r = results[type];
+          const percent = totalAnswered > 0 ? Math.round((score / totalAnswered) * 100) : 0;
+          const item = document.createElement('div');
+          item.className = 'top3-item' + (index === 0 ? ' rank-1' : '');
+          item.innerHTML = `
+            <span class="top3-rank">${rankIcons[index]}</span>
+            <span class="top3-emoji">${r.emoji}</span>
+            <div class="top3-info">
+              <div class="top3-name">${r.name}</div>
+              <div class="top3-sub">${r.subtitle}</div>
+            </div>
+            <div class="top3-bar-container">
+              <div class="top3-bar" style="width: 0%" data-width="${percent}%"></div>
+            </div>
+            <span class="top3-percent">${percent}%</span>
+          `;
+          list.appendChild(item);
+        });
+
+        top3Container.appendChild(list);
+
+        // Animate bars
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            list.querySelectorAll('.top3-bar').forEach(bar => {
+              bar.style.width = bar.dataset.width;
+            });
+          }, 100);
+        });
+      }
+
+      // Confetti!
+      launchConfetti();
+    }
+
+    function restartQuiz() {
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('startScreen').classList.remove('hidden');
+      currentQuestion = 0;
+      answers = [];
+    }
+
+    function shareResult() {
+      const sorted = calculateResult();
+      const topType = sorted[0][0];
+      const topScore = sorted[0][1];
+      const result = results[topType];
+      const totalAnswered = answers.filter(a => a !== null).length;
+      const matchPercent = totalAnswered > 0 ? Math.round((topScore / totalAnswered) * 100) : 0;
+
+      const top3 = sorted.filter(([t, s]) => s > 0).slice(0, 3);
+      const top3Text = top3.map(([t, s], i) => {
+        const r = results[t];
+        const p = totalAnswered > 0 ? Math.round((s / totalAnswered) * 100) : 0;
+        return `${['🥇','🥈','🥉'][i]} ${r.emoji} ${r.name}（${p}%）`;
+      }).join('\n');
+
+      const text = `🍉 测测你是哪种水果\n\n我的结果是：${result.emoji} ${result.name} —— ${result.subtitle}\n匹配度：${matchPercent}%\n\n🏆 TOP 3：\n${top3Text}\n\n${result.traits.map(t => '#' + t).join(' ')}\n\n快来测测你是哪种水果吧！`;
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.querySelector('.share-btn');
+          const original = btn.textContent;
+          btn.textContent = '✅ 已复制！';
+          setTimeout(() => { btn.textContent = original; }, 2000);
+        });
+      }
+    }
+
+    // ===== Confetti =====
+    function launchConfetti() {
+      const container = document.getElementById('confettiContainer');
+      container.innerHTML = '';
+      const emojis = ['🍎', '🍊', '🍋', '🍇', '🍓', '🍑', '🥝', '🍌', '✨', '🎉'];
+
+      for (let i = 0; i < 30; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.animationDuration = (2 + Math.random() * 3) + 's';
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.fontSize = (1 + Math.random() * 1.5) + 'rem';
+        container.appendChild(confetti);
+      }
+
+      setTimeout(() => { container.innerHTML = ''; }, 6000);
+    }
+
+    // ===== Keyboard Support =====
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('quizScreen').classList.contains('hidden')) return;
+
+      const keyMap = { '1': 0, '2': 1, '3': 2, '4': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+      const key = e.key.toLowerCase();
+
+      if (key in keyMap) {
+        selectOption(keyMap[key]);
+      } else if (key === 'enter' || key === 'arrowright') {
+        if (!document.getElementById('nextBtn').disabled) nextQuestion();
+      } else if (key === 'arrowleft') {
+        prevQuestion();
+      }
+    });
+
+    // ===== Init =====
+    initTheme();
+  </script>
+</body>
+</html>
